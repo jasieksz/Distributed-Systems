@@ -2,10 +2,9 @@ import org.jgroups.*;
 import org.jgroups.protocols.*;
 import org.jgroups.protocols.pbcast.*;
 import org.jgroups.stack.ProtocolStack;
+import org.jgroups.util.Util;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +16,7 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
     private static final String CHANNEL_NAME = "DHM";
     private static final String MULTICAST_ADDRESS = "230.0.0.27";
 
-    private Map<String, String> map = new ConcurrentHashMap<>();
+    private final Map<String, String> stateMap = new ConcurrentHashMap<>();
 
     public DistributedStringMap() throws Exception {
         initJGroupsConnection();
@@ -66,62 +65,100 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
 
     @Override
     public boolean containsKey(String key) {
-        return false;
+        return stateMap.containsKey(key);
     }
 
     @Override
     public String get(String key) {
-        return null;
+        return stateMap.get(key);
     }
 
     @Override
     public String put(String key, String value) {
-        return null;
+        String putElement = stateMap.put(key, value);
+        propagateMethod(new MapElement(key, value, MethodType.PUT));
+        return putElement;
     }
 
     @Override
     public String remove(String key) {
+        if (stateMap.containsKey(key)) {
+            String removedElement = stateMap.remove(key);
+            propagateMethod(new MapElement(key, MethodType.REMOVE));
+            return removedElement;
+        }
         return null;
     }
 
     /*
-     * Receiver Interface Implementation
+     * Helper methods
+     */
+
+    private void propagateMethod(MapElement mapElement) {
+        try {
+            jChannel.send(new Message(null, null, mapElement));
+        } catch (Exception e) {
+            System.out.println("TO TO TOOTOTO OTO DU PAD PADP PAS");
+            e.printStackTrace();
+        }
+    }
+
+    /*
+     * ReceiverAdapter Implementation
      */
 
     @Override
     public void viewAccepted(View view) {
-
+        if (view instanceof MergeView) {
+            ViewHandler viewHandler = new ViewHandler(jChannel, (MergeView) view);
+            viewHandler.start();
+        }
+        System.out.println("View : " + view);
     }
 
     @Override
     public void receive(Message message) {
-
+        System.out.println("Received : " + message);
+        MapElement element = (MapElement) message.getObject();
+        if (element.getMethodType().equals(MethodType.PUT)) {
+            stateMap.put(element.getKey(), element.getValue());
+        } else {
+            stateMap.remove(element.getKey());
+        }
     }
 
     @Override
-    public void getState(OutputStream outputStream) throws Exception {
-
+    public void getState(OutputStream output) throws Exception {
+        synchronized (stateMap) {
+            Util.objectToStream(stateMap, new DataOutputStream(output));
+        }
     }
 
     @Override
-    public void setState(InputStream inputStream) throws Exception {
-
+    @SuppressWarnings("unchecked")
+    public void setState(InputStream input) throws Exception {
+        Map<String, String> map;
+        map = (Map<String, String>) Util.objectFromStream(new DataInputStream(input));
+        synchronized (stateMap) {
+            stateMap.clear();
+            stateMap.putAll(map);
+        }
+        System.out.println(map.size() + " elements in map history):");
+        map.values().forEach(System.out::println);
     }
-
-
 }
 
-class MapMethods implements Serializable {
+class MapElement implements Serializable {
 
     private final String key;
     private final String value;
     private final MethodType methodType;
 
-    public MapMethods(String key, MethodType methodType) {
+    public MapElement(String key, MethodType methodType) {
         this(key, null, methodType);
     }
 
-    public MapMethods(String key, String value, MethodType methodType) {
+    public MapElement(String key, String value, MethodType methodType) {
         this.key = key;
         this.value = value;
         this.methodType = methodType;
