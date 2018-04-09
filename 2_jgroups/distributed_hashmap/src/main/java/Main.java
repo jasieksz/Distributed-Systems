@@ -1,5 +1,11 @@
 public class Main {
-    public static void main(String[] args) throws Exception {
-        System.out.println();
+    @SuppressWarnings("unchecked")
+    public static void main(String[] args){
+        try {
+            Command command = new Command();
+            command.runCommandLine();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

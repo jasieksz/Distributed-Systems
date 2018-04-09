@@ -18,8 +18,13 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
 
     private final Map<String, String> stateMap = new ConcurrentHashMap<>();
 
-    public DistributedStringMap() throws Exception {
-        initJGroupsConnection();
+    public DistributedStringMap(){
+
+        try {
+            initJGroupsConnection();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -55,6 +60,8 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
                 .addProtocol(new MFC())
                 .addProtocol(new STATE_TRANSFER())
                 .addProtocol(new FRAG2());
+//                .addProtocol(new SEQUENCER())
+//                .addProtocol(new FLUSH());
 
         protocolStack.init();
     }
@@ -75,7 +82,7 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
 
     @Override
     public String put(String key, String value) {
-        String putElement = stateMap.put(key, value);
+        String putElement = stateMap.get(key);
         propagateMethod(new MapElement(key, value, MethodType.PUT));
         return putElement;
     }
@@ -83,7 +90,7 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
     @Override
     public String remove(String key) {
         if (stateMap.containsKey(key)) {
-            String removedElement = stateMap.remove(key);
+            String removedElement = stateMap.get(key);
             propagateMethod(new MapElement(key, MethodType.REMOVE));
             return removedElement;
         }
@@ -98,7 +105,6 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
         try {
             jChannel.send(new Message(null, null, mapElement));
         } catch (Exception e) {
-            System.out.println("TO TO TOOTOTO OTO DU PAD PADP PAS");
             e.printStackTrace();
         }
     }
@@ -117,8 +123,8 @@ public class DistributedStringMap extends ReceiverAdapter implements SimpleStrin
     }
 
     @Override
-    public void receive(Message message) {
-        System.out.println("Received : " + message);
+    public synchronized void receive(Message message) {
+        System.out.println("Received : " + message + " " + message.getObject().toString());
         MapElement element = (MapElement) message.getObject();
         if (element.getMethodType().equals(MethodType.PUT)) {
             stateMap.put(element.getKey(), element.getValue());

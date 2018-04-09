@@ -6,3 +6,5 @@ venv/
 out/
 *.iml
 .gradle
+*.zip
+3_rabbitmq/RabbitMQLab/
