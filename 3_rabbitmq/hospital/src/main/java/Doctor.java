@@ -45,22 +45,26 @@ public class Doctor {
             }
         };
 
-        while (runFlag){
+        while (runFlag) {
             // receive
             channel.basicConsume(QUEUE_NAME, true, consumer);
             // read new
-            System.out.println("Enter injury type and patient name [knee.smith] or exit");
+            System.out.println("Enter \"injury type\".\"patient name\" or \"exit\"");
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String message = br.readLine();
 
             // exit program
-            if (message.contains("exit")){
+            if (message.contains("exit")) {
                 runFlag = false;
                 break;
             }
             // send
-            channel.basicPublish(EXCHANGE_NAME, message, props, message.getBytes("UTF-8"));
-            System.out.println("Sent : " + message);
+            if (message.contains("knee") || message.contains("elbow") || message.contains("hip")) {
+                channel.basicPublish(EXCHANGE_NAME, message, props, message.getBytes("UTF-8"));
+                System.out.println("Sent : " + message);
+            } else {
+                System.out.println("Invalid injury type");
+            }
 
         }
         // close
