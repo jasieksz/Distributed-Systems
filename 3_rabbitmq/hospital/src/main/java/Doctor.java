@@ -33,12 +33,12 @@ public class Doctor {
         channel.exchangeDeclare(EXCHANGE_HOSPITAL, BuiltinExchangeType.TOPIC);
 
         // RECEIVE EXAMINATION RESULTS
-        channel.queueDeclare(QUEUE_EXAMINATION, false, false, false, null);
-        channel.queueBind(QUEUE_EXAMINATION, EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + "." + corrId + ".#");
+        channel.queueDeclare(QUEUE_EXAMINATION + corrId, false, false, false, null);
+        channel.queueBind(QUEUE_EXAMINATION + corrId, EXCHANGE_HOSPITAL, "#." + corrId + ".#");
 
         // RECEIVE ADMIN MESSAGES
         channel.queueDeclare(QUEUE_ADMIN, false, false, false, null);
-        channel.queueBind(QUEUE_ADMIN, EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.#");
+        channel.queueBind(QUEUE_ADMIN, EXCHANGE_HOSPITAL, "#.admin.*");
 
         // CONSUMER
         Consumer consumer = new DefaultConsumer(channel) {

@@ -43,8 +43,7 @@ public class Technician {
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String message = new String(body, "UTF-8");
                 System.out.println("Received : " + message);
-                working(5);
-                System.out.println("REPLY TO : " + properties.getReplyTo());
+                working(4);
                 channel.basicPublish(EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + "." + properties.getReplyTo(), null, (message + "[done]").getBytes("UTF-8"));
                 System.out.println("Sent : " + (message + "[done]"));
             }
