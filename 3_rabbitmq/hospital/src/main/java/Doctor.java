@@ -1,6 +1,5 @@
 import com.rabbitmq.client.*;
 import com.rabbitmq.client.AMQP.BasicProperties;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,12 +32,12 @@ public class Doctor {
         channel.exchangeDeclare(EXCHANGE_HOSPITAL, BuiltinExchangeType.TOPIC);
 
         // RECEIVE EXAMINATION RESULTS
-        channel.queueDeclare(QUEUE_EXAMINATION + corrId, false, false, false, null);
+        channel.queueDeclare(QUEUE_EXAMINATION + corrId, false, false, true, null);
         channel.queueBind(QUEUE_EXAMINATION + corrId, EXCHANGE_HOSPITAL, "#." + corrId + ".#");
 
         // RECEIVE ADMIN MESSAGES
-        channel.queueDeclare(QUEUE_ADMIN, false, false, false, null);
-        channel.queueBind(QUEUE_ADMIN, EXCHANGE_HOSPITAL, "#.admin.*");
+        channel.queueDeclare(QUEUE_ADMIN, false, false, true, null);
+        channel.queueBind(QUEUE_ADMIN, EXCHANGE_HOSPITAL, "#.admin.#");
 
         // CONSUMER
         Consumer consumer = new DefaultConsumer(channel) {
@@ -57,10 +56,8 @@ public class Doctor {
             }
         };
 
-
-
         // PROGRAM
-        channel.basicConsume(QUEUE_EXAMINATION, true, consumer);
+        channel.basicConsume(QUEUE_EXAMINATION + corrId, true, consumer);
         channel.basicConsume(QUEUE_ADMIN, true, consumerAdmin);
 
         while (runFlag) {
@@ -88,7 +85,7 @@ public class Doctor {
             }
 
         }
-        // close
+
         channel.close();
         connection.close();
     }
