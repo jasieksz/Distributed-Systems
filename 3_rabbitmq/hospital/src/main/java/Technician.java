@@ -2,11 +2,13 @@ import com.rabbitmq.client.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 public class Technician {
     private final static String EXCHANGE_HOSPITAL = "hospital";
     private final static String QUEUE_ADMIN = "admin";
+    private final static String TECH_ID = UUID.randomUUID().toString();
 
     public static void main(String[] args) throws IOException, TimeoutException {
         System.out.print("TECHNICIAN - Specializations: [" + args[0] + " | " + args[1] + "]\n");
@@ -30,8 +32,8 @@ public class Technician {
         channel.queueDeclare(QUEUE_SPECIALIZATION_2, false, false, true, null);
         channel.queueBind(QUEUE_SPECIALIZATION_2, EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + "." + QUEUE_SPECIALIZATION_2 + ".#");
 
-        channel.queueDeclare(QUEUE_ADMIN, false, false, true, null);
-        channel.queueBind(QUEUE_ADMIN, EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.#");
+        channel.queueDeclare(QUEUE_ADMIN + TECH_ID, false, false, true, null);
+        channel.queueBind(QUEUE_ADMIN + TECH_ID, EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.info.#");
 
 
         // CONSUMER
@@ -42,7 +44,8 @@ public class Technician {
                 System.out.println("Received : " + message);
                 working(4);
                 channel.basicPublish(EXCHANGE_HOSPITAL, properties.getReplyTo(), null, (message + "[done]").getBytes("UTF-8"));
-                System.out.println("Sent : " + (message + "[done]"));
+                channel.basicPublish(EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.log", null, (message + "[done]").getBytes("UTF-8"));
+                System.out.println("Sent: " + (message + "[done]"));
             }
         };
 
@@ -57,7 +60,7 @@ public class Technician {
         System.out.println("Waiting for messages");
         channel.basicConsume(QUEUE_SPECIALIZATION_1, true, consumer);
         channel.basicConsume(QUEUE_SPECIALIZATION_2, true, consumer);
-        channel.basicConsume(QUEUE_ADMIN, true, consumerAdmin);
+        channel.basicConsume(QUEUE_ADMIN + TECH_ID, true, consumerAdmin);
 
         while (true) {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

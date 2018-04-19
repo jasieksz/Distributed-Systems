@@ -10,6 +10,7 @@ public class Doctor {
     private final static String QUEUE_EXAMINATION = "doctor";
     private final static String QUEUE_ADMIN = "admin";
     private final static String EXCHANGE_HOSPITAL = "hospital";
+//    private final static String EXCHANGE_ADMIN = "admin";
     private static boolean runFlag = true;
     private final static String corrId = UUID.randomUUID().toString();
 
@@ -36,8 +37,9 @@ public class Doctor {
         channel.queueBind(QUEUE_EXAMINATION + corrId, EXCHANGE_HOSPITAL, "#." + corrId + ".#");
 
         // RECEIVE ADMIN MESSAGES
-        channel.queueDeclare(QUEUE_ADMIN, false, false, true, null);
-        channel.queueBind(QUEUE_ADMIN, EXCHANGE_HOSPITAL, "#.admin.#");
+        channel.queueDeclare(QUEUE_ADMIN + corrId, false, false, true, null);
+        channel.queueBind(QUEUE_ADMIN + corrId, EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.info.#");
+//        channel.queueBind(QUEUE_ADMIN, EXCHANGE_ADMIN, "");
 
         // CONSUMER
         Consumer consumer = new DefaultConsumer(channel) {
@@ -58,7 +60,7 @@ public class Doctor {
 
         // PROGRAM
         channel.basicConsume(QUEUE_EXAMINATION + corrId, true, consumer);
-        channel.basicConsume(QUEUE_ADMIN, true, consumerAdmin);
+        channel.basicConsume(QUEUE_ADMIN + corrId, true, consumerAdmin);
 
         while (runFlag) {
             // read new
@@ -79,6 +81,7 @@ public class Doctor {
             // send
             if (message.contains("knee") || message.contains("elbow") || message.contains("hip")) {
                 channel.basicPublish(EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + "." + injury, props, message.getBytes("UTF-8"));
+                channel.basicPublish(EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.log." + injury, props, message.getBytes("UTF-8"));
                 System.out.println("Sent: " + message);
             } else {
                 System.out.println("Invalid injury type");
