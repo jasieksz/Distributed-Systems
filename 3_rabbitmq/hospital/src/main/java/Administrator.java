@@ -55,11 +55,9 @@ public class Administrator {
             } else if (operation.contains("info")) {
                 System.out.println("Enter message");
                 String message = br.readLine();
-                channel.basicPublish(EXCHANGE_HOSPITAL, "admin.info", null, message.getBytes("UTF-8"));
+                channel.basicPublish(EXCHANGE_HOSPITAL, EXCHANGE_HOSPITAL + ".admin.info", null, message.getBytes("UTF-8"));
                 System.out.println("Sent: " + message);
             }
-
-
         }
 
         channel.close();

@@ -1,5 +1,6 @@
 import com.rabbitmq.client.*;
 import com.rabbitmq.client.AMQP.BasicProperties;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,7 +11,7 @@ public class Doctor {
     private final static String QUEUE_EXAMINATION = "doctor";
     private final static String QUEUE_ADMIN = "admin";
     private final static String EXCHANGE_HOSPITAL = "hospital";
-//    private final static String EXCHANGE_ADMIN = "admin";
+    //    private final static String EXCHANGE_ADMIN = "admin";
     private static boolean runFlag = true;
     private final static String corrId = UUID.randomUUID().toString();
 

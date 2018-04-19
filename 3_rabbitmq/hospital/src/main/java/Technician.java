@@ -1,4 +1,5 @@
 import com.rabbitmq.client.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -65,7 +66,7 @@ public class Technician {
         while (true) {
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String line = br.readLine();
-            if (line.contains("exit")){
+            if (line.contains("exit")) {
                 channel.close();
                 connection.close();
                 break;
