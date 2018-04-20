@@ -11,7 +11,7 @@ public class ChatClient implements Runnable {
     private final int portNumber;
     private final String hostName;
     private String name;
-    private final int multicastPortNumber; //multicast udp args
+    private final int multicastPortNumber;
     private final String multicastAddress;
 
     public ChatClient(String multicastAddress, int portNumber, int multicastPortNumber) {
@@ -40,6 +40,7 @@ public class ChatClient implements Runnable {
                 } else {
                     socketOut.println(msg);
                 }
+                // TODO : "M" -> sendMulticast
             }
         } catch (IOException e) {
             e.printStackTrace();
