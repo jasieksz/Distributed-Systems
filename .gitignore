@@ -9,6 +9,9 @@ out/
 .gradle
 *.zip
 3_rabbitmq/RabbitMQLab/
+4_rpc/lab/
+4_rpc/example/
+*.txt
 
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle
