@@ -1,3 +1,4 @@
+# custom
 *.pdf
 *.png
 venv/
@@ -12,6 +13,9 @@ out/
 4_rpc/lab/
 4_rpc/example/
 *.txt
+*.bat
+gradlew
+/src/generated
 
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle
