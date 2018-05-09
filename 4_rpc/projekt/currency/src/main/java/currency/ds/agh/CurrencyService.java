@@ -5,8 +5,10 @@ import io.grpc.ServerBuilder;
 
 import java.io.IOException;
 
+import static currency.ds.agh.Utils.PORT;
+
 public class CurrencyService {
-    private final int PORT = 12345;
+
     private Server server;
 
     public CurrencyService() {
@@ -24,13 +26,10 @@ public class CurrencyService {
         server.start();
         System.out.println("Starting CurrencyServiceServer");
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                System.out.println("Shutting down CurrencyServiceServer");
-                server.shutdown();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down CurrencyServiceServer");
+            server.shutdown();
+        }));
 
         server.awaitTermination();
     }

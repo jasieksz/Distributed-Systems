@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import io.grpc.stub.StreamObserver;
 
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -18,16 +15,19 @@ import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 
+import static currency.ds.agh.Utils.*;
+
 public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImplBase {
 
     private ConcurrentMap<CurrencyType, Double> exchangeRates = new ConcurrentHashMap<>();
     private ConcurrentMap<CurrencyType, Set<StreamObserver<ExchangeRate>>> currencyBanksMap = new ConcurrentHashMap<>();
 
     public CurrencyServiceImpl() {
+        initCurrencyBanksMap();
         updateExchangeRates();
-        Observable.interval(Utils.UPDATE_RATES_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> updateExchangeRates());
-        Observable.interval(Utils.SIMULATE_RATES_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> simulateExchangeRates());
-        Observable.interval(Utils.NOTIFY_BANKS_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> notifyBanks());
+        Observable.interval(UPDATE_RATES_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> updateExchangeRates());
+        Observable.interval(SIMULATE_RATES_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> simulateExchangeRates());
+        Observable.interval(NOTIFY_BANKS_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> notifyBanks());
     }
 
     @Override
@@ -37,21 +37,24 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
     }
 
     public void notifyBanks() {
-        System.out.println("Notifying banks" + exchangeRates);
+        System.out.println("Notifying banks " + exchangeRates);
         currencyBanksMap.entrySet()
                 .stream()
                 .forEach(e -> e.getValue()
-                        .forEach(bank -> bank.onNext(ExchangeRate.newBuilder()
-                                .setCurrency(e.getKey())
-                                .setRate(exchangeRates.get(e.getKey()))
-                                .build())));
+                        .forEach(bank -> {
+                            bank.onNext(ExchangeRate.newBuilder()
+                                                    .setCurrency(e.getKey())
+                                                    .setRate(exchangeRates.get(e.getKey()))
+                                                    .build());
+                        }));
     }
 
 
     private void updateExchangeRates() {
         Map<String, Double> currentRates = getExchangeRatesFromURL();
         Arrays.stream(CurrencyType.values())
-                .filter(currencyType -> !(currencyType.equals(CurrencyType.EUR) || currencyType.equals(CurrencyType.UNRECOGNIZED)))
+                .filter(currencyType -> // EUR skipped beacuase it's base currency, UNRECOGNIZED = grpc generated :(
+                        !(currencyType.equals(CurrencyType.EUR) || currencyType.equals(CurrencyType.UNRECOGNIZED)))
                 .forEach(currencyType -> exchangeRates.put(currencyType, currentRates.get(currencyType.toString())));
     }
 
@@ -65,7 +68,7 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
         Gson gson = new Gson();
 
         try {
-            URL url = new URL("http://data.fixer.io/api/latest?access_key=bf788ce1c664cbb37a888d8fb3465c73"); // api key xD
+            URL url = new URL(CURRENCY_API_URL);
             InputStreamReader reader = new InputStreamReader(url.openStream());
             ExchangeRatesAdapter ratesAdapter = gson.fromJson(reader, ExchangeRatesAdapter.class);
             result.putAll(ratesAdapter.rates);
@@ -92,6 +95,12 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
                     ", rates=" + rates +
                     '}';
         }
+    }
+
+    private void initCurrencyBanksMap(){
+        Arrays.stream(CurrencyType.values())
+                .filter(c -> !(c.equals(CurrencyType.EUR) || c.equals(CurrencyType.UNRECOGNIZED)))
+                .forEach(c -> currencyBanksMap.put(c, new HashSet<>()));
     }
 
 }
