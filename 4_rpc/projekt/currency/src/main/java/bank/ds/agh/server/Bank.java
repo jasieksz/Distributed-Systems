@@ -8,17 +8,23 @@ import bank.ds.agh.handlers.AccountManagementHandler;
 import bank.ds.agh.handlers.AccountServiceHandler;
 import bank.ds.agh.handlers.PremiumAccountServiceHandler;
 import bank.ds.agh.handlers.ServerHandler;
-import currency.ds.agh.Currencies;
-import currency.ds.agh.CurrencyServiceGrpc;
-import currency.ds.agh.CurrencyType;
-import currency.ds.agh.ExchangeRate;
+import currency.ds.agh.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import org.apache.thrift.TMultiplexedProcessor;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TServerTransport;
+import org.apache.thrift.transport.TTransportException;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static currency.ds.agh.Utils.PORT;
 
@@ -28,15 +34,22 @@ public class Bank {
     private final CurrencyServiceGrpc.CurrencyServiceStub currencyServiceStub;
     private final ConcurrentMap<CurrencyType, Double> exchangeRates = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Account> accounts = new ConcurrentHashMap<>();
+    private final int port;
 
     public Bank(String host, int port, List<CurrencyType> curr) {
-        channel = ManagedChannelBuilder.forAddress(host, port)
+        this.port = port;
+        channel = ManagedChannelBuilder.forAddress(host, Utils.PORT)
                 .usePlaintext(true)
                 .build();
 
         currencyServiceStub = CurrencyServiceGrpc.newStub(channel);
-
         curr.forEach(currencyType -> exchangeRates.put(currencyType, 0.0));
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down CurrencyServiceClient");
+            channel.shutdown();
+
+        }));
     }
 
     public void run() {
@@ -44,14 +57,13 @@ public class Bank {
         subscribeToCurrencyService();
 
         // Handle client operations
-        AccountManagement.Processor<AccountManagementHandler> processor1 = new AccountManagement.Processor<>(new AccountManagementHandler(accounts));
-        AccountService.Processor<AccountServiceHandler> processor2 = new AccountService.Processor<>(new AccountServiceHandler(accounts));
-        PremiumAccountService.Processor<PremiumAccountServiceHandler> processor3 = new PremiumAccountService.Processor<>(new PremiumAccountServiceHandler(accounts, exchangeRates));
-        new Thread(new ServerHandler(processor1, PORT + 1)).run();
-        new Thread(new ServerHandler(processor2, PORT + 2)).run();
-        new Thread(new ServerHandler(processor3, PORT + 3)).run();
+        Runnable multiplex = () -> multiplexServerHandler();
+        new Thread(multiplex).run();
     }
 
+    /*
+    https://github.com/grpc/grpc-java/issues/3095
+     */
     private void subscribeToCurrencyService() {
 
         Currencies request = Currencies.newBuilder()
@@ -77,5 +89,30 @@ public class Bank {
         };
 
         currencyServiceStub.getExchangeRates(request, streamObserver);
+    }
+
+    private void multiplexServerHandler(){
+        AccountManagement.Processor<AccountManagementHandler> processor1 = new AccountManagement.Processor<>(new AccountManagementHandler(accounts));
+        AccountService.Processor<AccountServiceHandler> processor2 = new AccountService.Processor<>(new AccountServiceHandler(accounts));
+        PremiumAccountService.Processor<PremiumAccountServiceHandler> processor3 = new PremiumAccountService.Processor<>(new PremiumAccountServiceHandler(accounts, exchangeRates));
+
+        try {
+            TServerTransport serverTransport = new TServerSocket(port);
+            TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
+
+            TMultiplexedProcessor multiplex = new TMultiplexedProcessor();
+            multiplex.registerProcessor("manager", processor1);
+            multiplex.registerProcessor("standard", processor2);
+            multiplex.registerProcessor("premium", processor3);
+
+
+            TServer server = new TSimpleServer(new TServer.Args(serverTransport).protocolFactory(protocolFactory).processor(multiplex));
+
+            System.out.println("Starting the multiplex server...");
+            server.serve();
+
+        } catch (TTransportException e) {
+            e.printStackTrace();
+        }
     }
 }

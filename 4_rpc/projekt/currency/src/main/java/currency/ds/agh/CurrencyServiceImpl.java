@@ -33,11 +33,12 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
     public void getExchangeRates(Currencies request, StreamObserver<ExchangeRate> responseObserver) {
         request.getCurrencyList()
                 .forEach(cT -> currencyBanksMap.get(cT).add(responseObserver));
-        notifyBanks();
+//        notifyBanks();
     }
 
     public void notifyBanks() {
         System.out.println("Notifying banks " + exchangeRates);
+        try {
         currencyBanksMap.entrySet()
                 .stream()
                 .forEach(e -> e.getValue()
@@ -47,6 +48,9 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
                                                     .setRate(exchangeRates.get(e.getKey()))
                                                     .build());
                         }));
+        } catch (Exception e){
+            // todo : ignoruj zamkniete banki
+        }
     }
 
 
@@ -60,6 +64,8 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
 
     private void simulateExchangeRates() {
         exchangeRates.entrySet()
+                .stream()
+                .filter(e -> !e.getKey().equals(CurrencyType.EUR))
                 .forEach(e -> e.setValue(e.getValue() * ThreadLocalRandom.current().nextDouble(0.985, 1.015)));
     }
 

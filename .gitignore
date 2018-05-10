@@ -16,6 +16,7 @@ out/
 *.bat
 gradlew
 4_rpc/projekt/currency/src/generated/
+4_rpc/projekt/currency/python/generated/
 
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle
