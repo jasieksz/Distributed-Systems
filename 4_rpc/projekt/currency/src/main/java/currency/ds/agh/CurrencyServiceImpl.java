@@ -12,9 +12,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-
 import rx.Observable;
-
 import static currency.ds.agh.Utils.*;
 
 public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImplBase {
@@ -25,6 +23,7 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
     public CurrencyServiceImpl() {
         initCurrencyBanksMap();
         updateExchangeRates();
+        exchangeRates.put(CurrencyType.EUR, 1.0); // BASE CURRENCY
         Observable.interval(UPDATE_RATES_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> updateExchangeRates());
         Observable.interval(SIMULATE_RATES_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> simulateExchangeRates());
         Observable.interval(NOTIFY_BANKS_INTERVAL, TimeUnit.SECONDS).subscribe(tick -> notifyBanks());
@@ -34,6 +33,7 @@ public class CurrencyServiceImpl extends CurrencyServiceGrpc.CurrencyServiceImpl
     public void getExchangeRates(Currencies request, StreamObserver<ExchangeRate> responseObserver) {
         request.getCurrencyList()
                 .forEach(cT -> currencyBanksMap.get(cT).add(responseObserver));
+        notifyBanks();
     }
 
     public void notifyBanks() {

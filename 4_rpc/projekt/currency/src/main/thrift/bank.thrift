@@ -1,4 +1,4 @@
-namespace java bank
+namespace java bank.ds.agh
 
 typedef string PESEL
 typedef string Currency
@@ -23,30 +23,33 @@ struct CreditCosts {
     2: double creditCurrencyCost,
 }
 
+struct ThriftDate {
+  1: i32 year,
+  2: i32 month,
+}
+
 struct CreditParameters {
     1: Currency currency,
     2: double cost,
+    3: ThriftDate start,
+    4: ThriftDate stop,
 }
 
-exception AuthorizationException {
-    1: string why
+exception InvalidOperationException {
+    1: string msg
 }
 
-exception InvalidArgumentException {
-    1: string why
-}
 
 service AccountManagement {
-    AccountDetails createAccount(1: Account account) throws(1: InvalidArgumentException authorizationException),
+    AccountDetails createAccount(1: Account account) throws(1: InvalidOperationException invalidOperationException),
 }
 
 service AccountService {
-    AccountDetails getAccountDetails(1: PESEL pesel) throws(1: AuthorizationException authorizationException),
+    AccountDetails getAccountDetails(1: PESEL pesel) throws(1: InvalidOperationException invalidOperationException),
 }
 
 service PremiumAccountService extends AccountService {
     CreditCosts getCreditCosts(1: PESEL pesel, 2: CreditParameters creditParameters) throws (
-        1: AuthorizationException authorizationException,
-        2: InvalidArgumentException invalidArgumentException,
+        1: InvalidOperationException invalidOperationException,
     ),
 }
