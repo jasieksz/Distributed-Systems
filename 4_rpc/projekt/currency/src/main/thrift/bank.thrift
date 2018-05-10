@@ -1,4 +1,5 @@
 namespace java bank.ds.agh
+namespace py bank.ds.agh
 
 typedef string PESEL
 typedef string Currency

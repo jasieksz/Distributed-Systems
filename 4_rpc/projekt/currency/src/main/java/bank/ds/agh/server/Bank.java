@@ -53,6 +53,7 @@ public class Bank {
     }
 
     public void run() {
+        System.out.println("Started Bank : " + port);
         // Get exchangeRates from currenyService
         subscribeToCurrencyService();
 
