@@ -34,10 +34,12 @@ public class PremiumAccountServiceHandler implements PremiumAccountService.Iface
          * Client gives monthly amount of credit and duration
          * Client gets total cost
          */
+
         double exchangeRate = exchangeRates.get(CurrencyType.valueOf(creditParameters.currency));
+        double clientBaseCurrencyRate = exchangeRates.get(CurrencyType.valueOf(account.getBaseCurrency()));
         double creditCurrencyCost = (creditParameters.cost + creditFee(creditParameters.cost))
                 * creditDurationInMonths(creditParameters.start, creditParameters.stop);
-        double baseCurrencyCost = creditCurrencyCost / exchangeRate;
+        double baseCurrencyCost = creditCurrencyCost / exchangeRate * clientBaseCurrencyRate;
 
         return new CreditCosts(baseCurrencyCost, creditCurrencyCost);
     }

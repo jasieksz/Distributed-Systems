@@ -50,7 +50,8 @@ if __name__ == '__main__':
             print(response)
         elif cmd == "credit":
             p = input("Enter your pesel")
-            cur, c, start, stop = input("Enter credit parrameters : \"currency;cost;startdate(year-month);enddate\"")
+            credit_info = input("Enter credit parrameters : \"currency;cost;startdate(year-month);enddate\"")
+            cur, c, start, stop = credit_info.split(";")
             c = float(c)
             start = start.split("-")
             stop = stop.split("-")

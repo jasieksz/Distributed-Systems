@@ -17,7 +17,10 @@ public class AccountManagementHandler implements AccountManagement.Iface {
     }
 
     @Override
-    public AccountDetails createAccount(Account account) {
+    public AccountDetails createAccount(Account account) throws InvalidOperationException {
+        if (accounts.containsKey(account.pesel)){
+            throw new InvalidOperationException("Account already exists");
+        }
         accounts.put(account.pesel, account);
         return new AccountDetails(account.pesel, isPremium().test(account), account.income, account.baseCurrency);
     }
