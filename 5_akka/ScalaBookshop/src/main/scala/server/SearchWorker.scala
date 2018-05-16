@@ -1,25 +1,26 @@
 package server
 
 import akka.actor.{Actor, PoisonPill}
-
+import Util.{SearchOperation, Result}
 import scala.io.{BufferedSource, Source}
 
 class SearchWorker extends Actor {
   def receive: Receive = {
-    case "exit" =>
+    case "terminate" =>
       println("Search Worker Suicide")
       self ! PoisonPill
-    case msg: String =>
-      println("Searching for price of " + msg)
-      searchDatabase()
+    case SearchOperation(title, client) =>
+      println("Searching for price of " + title)
+      client ! Result(searchDatabase(title))
   }
 
-  def searchDatabase() {
+  def searchDatabase(title: String): Int = {
     val bufferedSource: BufferedSource = Source.fromFile("resources/books1")
-    for (line <- bufferedSource.getLines) {
-      println(line)
-    }
+    val book = bufferedSource.getLines().find(line => line.startsWith(title)).getOrElse(";0")
     bufferedSource.close
+    val result: Int = book.split(";")(1).toInt
+    println(result)
+    result
   }
 
 
