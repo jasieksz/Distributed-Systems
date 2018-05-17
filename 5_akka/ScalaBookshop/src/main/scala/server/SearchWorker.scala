@@ -16,12 +16,8 @@ class SearchWorker extends Actor {
 
   def searchDatabase(title: String): Int = {
     val bufferedSource: BufferedSource = Source.fromFile("resources/books1")
-    val book = bufferedSource.getLines().find(line => line.startsWith(title)).getOrElse(";0")
+    val book = bufferedSource.getLines().find(line => line.startsWith(title)).getOrElse("a;0")
     bufferedSource.close
-    val result: Int = book.split(";")(1).toInt
-    println(result)
-    result
+    book.split(";")(1).toInt
   }
-
-
 }

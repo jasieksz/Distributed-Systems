@@ -13,9 +13,9 @@ class OrderActor extends Actor {
 
   }
 
-  def makeOrder(title: String): String = {
+  def makeOrder(title: String): Result = {
     println("Putting order for " + title + " in database")
     // TODO : write to orders file, return order made message on success
-    "order made"
+    Result(1)
   }
 }
