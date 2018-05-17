@@ -7,14 +7,14 @@ class ClientActor extends Actor{
   val bookshopSupervisor: ActorSelection = context.actorSelection("akka.tcp://bookshop_system@127.0.0.1:2552/user/master")
 
   def receive: Receive = {
-    case "terminate" => self ! PoisonPill
+    case "terminate" =>
+      self ! PoisonPill
+
     case Result(value) =>
       println("Received result: " + value)
     case SearchOperation(title,_) =>
-      println("ClientActor Search")
       bookshopSupervisor ! SearchOperation(title, self)
     case OrderOperation(title,_) =>
-      println("ClientActor Order")
       bookshopSupervisor ! OrderOperation(title, self)
   }
 }

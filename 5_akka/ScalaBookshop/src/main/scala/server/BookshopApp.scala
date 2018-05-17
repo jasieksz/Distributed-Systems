@@ -9,8 +9,10 @@ import com.typesafe.config.ConfigFactory
 object BookshopApp extends App {
   print("Bookshop\n ")
 
-
-  val config = ConfigFactory.parseFile(new File("application.conf"))
+//  val configFile = getClass.getClassLoader
+//    .getResource("bookshop_application.conf")
+//    .getFile
+  val config = ConfigFactory.parseFile(new File("resources/bookshop_application.conf"))
   val system: ActorSystem = ActorSystem("bookshop_system", config)
   val bookshopSupervisor = system.actorOf(Props[BookshopSupervisor], "master")
 

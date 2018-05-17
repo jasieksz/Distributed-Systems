@@ -17,11 +17,10 @@ class BookshopSupervisor extends Actor {
       router ! PoisonPill //TODO : how to kill all SearchWorkers?
       self ! PoisonPill
     case OrderOperation(title, client) =>
-      println("BS Supervisor order received: " + title)
+      println("Bookshop received order for: " + title)
       orderActor ! OrderOperation(title, client)
     case SearchOperation(title, client) =>
-      println("BS Supervisor search received: " + title)
+      println("Bookshop received search query: " + title)
       router ! SearchOperation(title, client)
-
   }
 }
