@@ -5,6 +5,7 @@ import java.io.File
 import akka.actor.{ActorSystem, Props}
 import Util.{OrderOperation, SearchOperation}
 import com.typesafe.config.ConfigFactory
+import server.BookshopApp.getClass
 
 object ClientApp extends App {
 
@@ -22,7 +23,7 @@ object ClientApp extends App {
     str match {
       case "search" =>
         val title = input.readLine("Enter book title\n")
-        clientActor ! SearchOperation(title, null) // TODO : get clients from ClientApp
+        clientActor ! SearchOperation(title, null)
       case "order" =>
         val title = input.readLine("Enter book title\n")
         clientActor ! OrderOperation(title, null)
