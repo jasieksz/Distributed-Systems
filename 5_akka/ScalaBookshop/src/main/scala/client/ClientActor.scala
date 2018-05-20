@@ -23,8 +23,7 @@ class ClientActor extends Actor{
       bookshopSupervisor ! OrderOperation(title, self)
     case StreamOperation(title, _) =>
       bookshopSupervisor ! StreamOperation(title, self)
-    case msg: String => println(msg)
-
+    case msg: String =>
+      println(msg)
   }
-
 }

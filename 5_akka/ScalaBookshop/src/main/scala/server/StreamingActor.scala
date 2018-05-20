@@ -25,7 +25,6 @@ class StreamingActor extends Actor{
       self ! PoisonPill
     case StreamOperation(title, client) =>
       readBook(baseBooksPath + title, client).run()
-    //TODO : Q? Does he kill himself when stream is finished ???? ==> A : NOPE ==> Q? How can i kill him?
   }
 
   def readBook(path: String, client: ActorRef): RunnableGraph[Future[IOResult]] = {
@@ -40,8 +39,6 @@ class StreamingActor extends Actor{
               .map(_.decodeString("UTF-8"))
               .map(_.trim())
               .throttle(1, 1.second)
-
-    //TODO : Q? Why newSentenceFLow doesnt produce "Completed;" message when finished ???
 
     source.via(newLineFlow).to(sink)
   }

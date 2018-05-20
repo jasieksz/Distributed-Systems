@@ -1,9 +1,13 @@
 package server
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import java.io.IOException
+
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, PoisonPill, Props, SupervisorStrategy}
 import Util.{OrderOperation, SearchOperation, StreamOperation}
+import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume, Stop}
 import akka.routing.RoundRobinPool
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.Future
 
 class BookshopSupervisor extends Actor {
@@ -14,7 +18,7 @@ class BookshopSupervisor extends Actor {
     case "terminate" =>
       println("Supervisor Suicide")
       orderActor ! "terminate"
-      router ! PoisonPill //TODO : how to kill all SearchWorkers?
+      router ! PoisonPill
       self ! PoisonPill
     case OrderOperation(title, client) =>
       println("Bookshop received order for: " + title)
@@ -26,6 +30,11 @@ class BookshopSupervisor extends Actor {
       println("Bookshop received stream request: " + title)
       val streamingActor: ActorRef = context.actorOf(Props[StreamingActor])
       streamingActor ! StreamOperation(title, client)
-//      streamingActor ! "terminate"
   }
+
+  override val supervisorStrategy: OneForOneStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1.minute) {
+      case _: IOException => Restart
+      case _: Exception => Escalate
+    }
 }
