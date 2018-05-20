@@ -24,6 +24,8 @@ class BookshopSupervisor extends Actor {
       router ! SearchOperation(title, client)
     case StreamOperation(title, client) =>
       println("Bookshop received stream request: " + title)
-      // TODO : Implement Streaming
+      val streamingActor: ActorRef = context.actorOf(Props[StreamingActor])
+      streamingActor ! StreamOperation(title, client)
+//      streamingActor ! "terminate"
   }
 }

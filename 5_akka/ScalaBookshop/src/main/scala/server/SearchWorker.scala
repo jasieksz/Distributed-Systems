@@ -11,8 +11,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import math.max
 
 class SearchWorker extends Actor {
-  val dbPath1: String = "resources/books1"
-  val dbPath2: String = "resources/books2"
+  val dbPath1: String = "resources/databases/books1"
+  val dbPath2: String = "resources/databases/books2"
 
   def receive: Receive = {
     case "terminate" =>

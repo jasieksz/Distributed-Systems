@@ -18,7 +18,7 @@ object ClientApp extends App {
   var run = true
 
   while (run) {
-    val str = input.readLine("Enter command : [search / order / quit]\n")
+    val str = input.readLine("Enter command : [search / order / read / quit]\n")
     str match {
       case "search" =>
         val title = input.readLine("Enter book title\n")

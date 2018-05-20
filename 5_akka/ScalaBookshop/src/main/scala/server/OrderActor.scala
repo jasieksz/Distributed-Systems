@@ -7,7 +7,7 @@ import java.io._
 import Util.Util._
 
 class OrderActor extends Actor {
-  val orderDbPath: String = "resources/orders"
+  val orderDbPath: String = "resources/databases/orders"
   def receive: Receive = {
     case "terminate" =>
       println("Order Actor Suicide")
