@@ -2,8 +2,12 @@ package server
 
 import akka.actor.{Actor, PoisonPill}
 import Util.{OrderOperation, Result}
+import java.io._
+
+import Util.Util._
 
 class OrderActor extends Actor {
+  val orderDbPath: String = "resources/orders"
   def receive: Receive = {
     case "terminate" =>
       println("Order Actor Suicide")
@@ -14,8 +18,12 @@ class OrderActor extends Actor {
   }
 
   def makeOrder(title: String): Result = {
-    println("Putting order for " + title + " in database")
-    // TODO : write to orders file, return order made message on success
-    Result(-1)
+    val pw = new PrintWriter(new BufferedWriter(new FileWriter(orderDbPath, true)))
+    pw.println(title)
+    pw.close()
+    if (pw.checkError())
+      Result(ORDER_FAILED)
+    else
+      Result(ORDER_SUCCESS)
   }
 }

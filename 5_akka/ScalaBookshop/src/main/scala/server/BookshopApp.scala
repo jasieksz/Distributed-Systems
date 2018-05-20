@@ -7,11 +7,8 @@ import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 
 object BookshopApp extends App {
-  print("Bookshop\n ")
+  print("Bookshop\n")
 
-//  val configFile = getClass.getClassLoader
-//    .getResource("bookshop_application.conf")
-//    .getFile
   val config = ConfigFactory.parseFile(new File("resources/bookshop_application.conf"))
   val system: ActorSystem = ActorSystem("bookshop_system", config)
   val bookshopSupervisor = system.actorOf(Props[BookshopSupervisor], "master")
@@ -25,6 +22,8 @@ object BookshopApp extends App {
       case "quit" =>
         run = false
         bookshopSupervisor ! "terminate"
+      case _ =>
+        println("Invalid command")
     }
   }
   system.terminate()

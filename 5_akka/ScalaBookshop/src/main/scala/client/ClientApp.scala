@@ -3,9 +3,8 @@ package client
 import java.io.File
 
 import akka.actor.{ActorSystem, Props}
-import Util.{OrderOperation, SearchOperation}
+import Util.{OrderOperation, SearchOperation, StreamOperation}
 import com.typesafe.config.ConfigFactory
-import server.BookshopApp.getClass
 
 object ClientApp extends App {
 
@@ -27,9 +26,14 @@ object ClientApp extends App {
       case "order" =>
         val title = input.readLine("Enter book title\n")
         clientActor ! OrderOperation(title, null)
+      case "read" =>
+        val title = input.readLine("Enter book title\n")
+        clientActor ! StreamOperation(title, null)
       case "quit" =>
         run = false
         clientActor ! "terminate"
+      case _ =>
+        println("Invalid command")
     }
   }
   system.terminate()

@@ -1,7 +1,7 @@
 package server
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
-import Util.{OrderOperation, SearchOperation}
+import Util.{OrderOperation, SearchOperation, StreamOperation}
 import akka.routing.RoundRobinPool
 
 import scala.concurrent.Future
@@ -22,5 +22,8 @@ class BookshopSupervisor extends Actor {
     case SearchOperation(title, client) =>
       println("Bookshop received search query: " + title)
       router ! SearchOperation(title, client)
+    case StreamOperation(title, client) =>
+      println("Bookshop received stream request: " + title)
+      // TODO : Implement Streaming
   }
 }
