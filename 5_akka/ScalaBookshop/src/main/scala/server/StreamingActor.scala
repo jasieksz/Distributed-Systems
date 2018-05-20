@@ -3,10 +3,10 @@ package server
 import java.io.File
 
 import Util.StreamOperation
-import akka.NotUsed
+import akka.{Done, NotUsed}
 import akka.actor.Status.Success
 import akka.actor.{Actor, ActorRef, PoisonPill}
-import akka.stream.{ActorMaterializer, IOResult}
+import akka.stream.{ActorMaterializer, IOResult, KillSwitches}
 import akka.stream.scaladsl.Framing.delimiter
 import akka.stream.scaladsl._
 import akka.util.ByteString
@@ -30,7 +30,7 @@ class StreamingActor extends Actor{
 
   def readBook(path: String, client: ActorRef): RunnableGraph[Future[IOResult]] = {
     val source: Source[ByteString, Future[IOResult]] = FileIO.fromPath(new File(path).toPath)
-    val sink: Sink[Any, NotUsed] = Sink.actorRef(client, "Completed;")
+    val sink: Sink[Any, NotUsed] = Sink.actorRef(client, "Completed stream")
 
     val newLineFlow: Flow[ByteString, String, NotUsed] = delimiter(ByteString("\n"), Int.MaxValue)
               .map(_.decodeString("UTF-8"))
