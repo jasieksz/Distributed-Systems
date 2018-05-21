@@ -5,7 +5,8 @@ import akka.actor.{Actor, ActorSelection, PoisonPill}
 import Util.{OrderOperation, Result, SearchOperation, StreamOperation}
 
 class ClientActor extends Actor{
-  val bookshopSupervisor: ActorSelection = context.actorSelection("akka.tcp://bookshop_system@127.0.0.1:2552/user/master")
+  val bookshopSupervisorPath: String = "akka.tcp://bookshop_system@127.0.0.1:2552/user/master"
+  val bookshopSupervisor: ActorSelection = context.actorSelection(bookshopSupervisorPath)
 
   def receive: Receive = {
     case "terminate" =>
@@ -24,6 +25,13 @@ class ClientActor extends Actor{
     case StreamOperation(title, _) =>
       bookshopSupervisor ! StreamOperation(title, self)
     case msg: String =>
-      println(msg)
+      if (msg.startsWith("Completed:")){
+        val id: Char = msg.charAt(msg.length-1)
+        val path: String = bookshopSupervisorPath + "/$" + id
+        context.actorSelection(path) ! "terminate"
+      } else {
+        println(msg)
+      }
+    case _ => println(" yyy")
   }
 }
