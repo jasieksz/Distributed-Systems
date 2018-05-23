@@ -25,13 +25,12 @@ class ClientActor extends Actor{
     case StreamOperation(title, _) =>
       bookshopSupervisor ! StreamOperation(title, self)
     case msg: String =>
-      if (msg.startsWith("Completed:")){
-        val id: Char = msg.charAt(msg.length-1)
-        val path: String = bookshopSupervisorPath + "/$" + id
-        context.actorSelection(path) ! "terminate"
-      } else {
-        println(msg)
-      }
-    case _ => println(" yyy")
+      println(msg)
+//      if (msg.startsWith("Completed:")){
+//        val id: Char = msg.charAt(msg.length-1)
+////        context.actorSelection(bookshopSupervisorPath + "/$" + id) ! "terminate"
+//      } else {
+//        println(msg)
+//      }
   }
 }

@@ -30,7 +30,8 @@ class StreamingActor extends Actor{
 
   def readBook(path: String, client: ActorRef): RunnableGraph[Future[IOResult]] = {
     val source: Source[ByteString, Future[IOResult]] = FileIO.fromPath(new File(path).toPath)
-    val sink: Sink[Any, NotUsed] = Sink.actorRef(client, "Completed:"+self.path)
+    val sink: Sink[Any, NotUsed] = Sink.actorRef(client, "Completed Stream")
+    // source requires empty line at the end to sen onCompleteMessage
 
     val newLineFlow: Flow[ByteString, String, NotUsed] = delimiter(ByteString("\n"), Int.MaxValue)
               .map(_.decodeString("UTF-8"))
