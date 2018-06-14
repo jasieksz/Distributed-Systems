@@ -1,43 +1,105 @@
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
+public class DataMonitor implements Watcher {
 
-    private ZooKeeper zk;
-    private String znode;
-    private Watcher chainedWatcher;
+    private final static String NODE = "/znode_testowy";
+
+    private ZooKeeper zooKeeper;
     public boolean dead;
     private DataMonitorListener listener;
-    private byte prevData[];
+    private List<String> children = new ArrayList<>();
 
-    public DataMonitor(ZooKeeper zk, String znode, Watcher chainedWatcher, DataMonitorListener listener) {
-        this.zk = zk;
-        this.znode = znode;
-        this.chainedWatcher = chainedWatcher;
+    public DataMonitor(ZooKeeper zk, DataMonitorListener listener) {
+        this.zooKeeper = zk;
         this.listener = listener;
-        // Get things started by checking if the node exists. We are going
-        // to be completely event driven
-        zk.exists(znode, true, this, null);
     }
 
     /**
      * Other classes use the DataMonitor by implementing this method
+     * exists ==> create | delete | change
      */
     public interface DataMonitorListener {
-        /**
-         * The existence status of the node has changed.
-         */
-        void exists(byte data[]);
+        void create(String path);
 
-        /**
-         * The ZooKeeper session is no longer valid.
-         *
-         * @param rc the ZooKeeper reason code
-         */
-        void closing(int rc);
+        void delete(String path);
+
+        void change(int size);
+
+        void closing(int reasonCode);
     }
+
+    @Override
+    public void process(WatchedEvent event) {
+        System.out.println(event);
+        String path = event.getPath();
+
+
+        if (event.getType() == Event.EventType.None) {
+            if (event.getState() == Event.KeeperState.Expired) {
+                dead = true;
+                listener.closing(0);
+            }
+        } else if (event.getType() == Event.EventType.NodeCreated) {
+            System.out.println("Created new node");
+            if (path.equals(NODE)) {
+                try {
+                    zooKeeper.getChildren(NODE, this);
+                } catch (KeeperException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+                listener.create(path);
+            }
+        } else if (event.getType() == Event.EventType.NodeDeleted) {
+            System.out.println("Deleted node");
+            if (path.equals(NODE)) {
+                listener.delete(path);
+            } else if (path.contains(NODE)) {
+                children.remove(path);
+            }
+        } else if (event.getType() == Event.EventType.NodeChildrenChanged) {
+            if (path.contains(NODE)) {
+                try {
+                    recursiveAdd(path);
+                } catch (KeeperException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+                listener.change(children.size());
+            }
+        }
+        // SUBSCRIBE
+        try {
+            zooKeeper.exists(NODE, this);
+            for (String child : children) {
+                if (zooKeeper.exists(child, this) != null) {
+                    zooKeeper.getChildren(child, this);
+                }
+            }
+        } catch (KeeperException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void recursiveAdd(String path) throws KeeperException, InterruptedException {
+        if(!children.contains(path)){
+//            System.out.println("REC PATH ADD " + path);
+            children.add(path);
+        }
+        if (zooKeeper.exists(path, false) != null) {
+            for (String child : zooKeeper.getChildren(path, false)){
+                recursiveAdd(path + "/" + child);
+            }
+        }
+    }
+}
+
+
+
+/*
 
     public void process(WatchedEvent event) {
         String path = event.getPath();
@@ -106,4 +168,4 @@ public class DataMonitor implements Watcher, AsyncCallback.StatCallback {
             prevData = b;
         }
     }
-}
+ */
